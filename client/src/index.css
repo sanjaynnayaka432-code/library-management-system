@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: rgba(226, 232, 240, 0.6);
+  }
+  .dark * {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Custom modern frosted scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.6);
+}
+
+/* ===================================================
+   GLASSMORPHISM CORE DESIGN TOKENS
+   =================================================== */
+
+/* Ambient Glass Surface */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+}
+.dark .glass-panel {
+  background: rgba(13, 19, 34, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* Interactive Glass Card with Specular Shine */
+.glass-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.04), 0 2px 8px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.dark .glass-card {
+  background: rgba(16, 24, 43, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+.dark .glass-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px -4px rgba(99, 102, 241, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+.dark .glass-card:hover {
+  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.5), 0 0 20px -2px rgba(99, 102, 241, 0.15);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* Floating Glass Inputs */
+.glass-input {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(203, 213, 225, 0.7);
+  transition: all 0.2s ease;
+}
+.glass-input:focus {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+.dark .glass-input {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+.dark .glass-input:focus {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+/* Glass Buttons */
+.glass-button-primary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px -2px rgba(99, 102, 241, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-button-primary:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  box-shadow: 0 6px 20px -2px rgba(99, 102, 241, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.glass-button-secondary {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  color: #1e293b;
+  transition: all 0.2s ease;
+}
+.glass-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+.dark .glass-button-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+}
+.dark .glass-button-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Ambient Aurora Glow Circles */
+.aurora-bg {
+  position: relative;
+  background-color: #f8fafc;
+}
+.dark .aurora-bg {
+  background-color: #070b14;
+}
+
+/* Glow Blobs */
+.glow-orb {
+  position: fixed;
+  border-radius: 9999px;
+  filter: blur(100px);
+  pointer-events: none;
+  opacity: 0.55;
+  z-index: 0;
+  transition: opacity 0.5s ease;
+}
+.dark .glow-orb {
+  opacity: 0.28;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
