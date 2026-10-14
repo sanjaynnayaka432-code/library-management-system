@@ -1,9 +1,11 @@
-const { query } = require('../config/db');
+const { query, getPool } = require('../config/db');
 const { getSetting, calculateFine } = require('../utils/fineCalculator');
 const { createNotification } = require('../services/notificationService');
 
 // POST /api/transactions/issue
 const issueBook = async (req, res, next) => {
+  const pool = getPool();
+  const conn = await pool.getConnection();
   try {
     const { userId, bookId, customDueDate } = req.body;
 
@@ -15,7 +17,7 @@ const issueBook = async (req, res, next) => {
     }
 
     // 1. Check student exists and is ACTIVE
-    const [students] = await query('SELECT id, name, email, status FROM users WHERE id = ?', [userId]);
+    const [students] = await conn.query('SELECT id, name, email, status FROM users WHERE id = ?', [userId]);
     if (students.length === 0) {
       return res.status(404).json({ success: false, message: 'Student account not found' });
     }
@@ -31,7 +33,7 @@ const issueBook = async (req, res, next) => {
     const maxBooksStr = await getSetting('max_books_per_student', '5');
     const maxBooks = parseInt(maxBooksStr, 10) || 5;
 
-    const [activeLoans] = await query(
+    const [activeLoans] = await conn.query(
       `SELECT COUNT(*) as count FROM transactions WHERE user_id = ? AND status IN ('ISSUED', 'OVERDUE')`,
       [userId]
     );
@@ -44,7 +46,7 @@ const issueBook = async (req, res, next) => {
     }
 
     // 3. Check student doesn't already have the SAME book currently borrowed
-    const [alreadyBorrowed] = await query(
+    const [alreadyBorrowed] = await conn.query(
       `SELECT id FROM transactions WHERE user_id = ? AND book_id = ? AND status IN ('ISSUED', 'OVERDUE')`,
       [userId, bookId]
     );
@@ -56,14 +58,18 @@ const issueBook = async (req, res, next) => {
       });
     }
 
-    // 4. Check book exists and has available copies
-    const [books] = await query('SELECT id, title, available_copies FROM books WHERE id = ?', [bookId]);
+    await conn.beginTransaction();
+
+    // 4. Lock book row and check available copies
+    const [books] = await conn.query('SELECT id, title, available_copies FROM books WHERE id = ? FOR UPDATE', [bookId]);
     if (books.length === 0) {
+      await conn.rollback();
       return res.status(404).json({ success: false, message: 'Book not found' });
     }
     const book = books[0];
 
     if (book.available_copies <= 0) {
+      await conn.rollback();
       return res.status(400).json({
         success: false,
         message: `No copies of "${book.title}" are currently available for issue`
@@ -84,21 +90,33 @@ const issueBook = async (req, res, next) => {
     const todayFormatted = new Date().toISOString().split('T')[0];
 
     // 6. Create transaction
-    const [transResult] = await query(
+    const [transResult] = await conn.query(
       `INSERT INTO transactions (user_id, book_id, issue_date, due_date, status, fine_amount, created_at)
        VALUES (?, ?, ?, ?, 'ISSUED', 0.00, NOW())`,
       [userId, bookId, todayFormatted, dueDateFormatted]
     );
 
-    // 7. Decrement available copies
-    await query('UPDATE books SET available_copies = available_copies - 1, updated_at = NOW() WHERE id = ?', [bookId]);
+    // 7. Decrement available copies safely
+    const [updateRes] = await conn.query(
+      'UPDATE books SET available_copies = available_copies - 1, updated_at = NOW() WHERE id = ? AND available_copies > 0',
+      [bookId]
+    );
+    if (updateRes.affectedRows === 0) {
+      await conn.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `No copies of "${book.title}" are currently available for issue`
+      });
+    }
 
     // 8. If student had an active WAITING reservation for this book, mark it FULFILLED
-    await query(
+    await conn.query(
       `UPDATE reservations SET status = 'FULFILLED' 
        WHERE user_id = ? AND book_id = ? AND status = 'WAITING'`,
       [userId, bookId]
     );
+
+    await conn.commit();
 
     // 9. Send notification to student
     await createNotification(
@@ -115,12 +133,17 @@ const issueBook = async (req, res, next) => {
       dueDate: dueDateFormatted
     });
   } catch (error) {
+    await conn.rollback().catch(() => {});
     next(error);
+  } finally {
+    conn.release();
   }
 };
 
 // POST /api/transactions/return
 const returnBook = async (req, res, next) => {
+  const pool = getPool();
+  const conn = await pool.getConnection();
   try {
     const { transactionId, returnDate } = req.body;
 
@@ -131,21 +154,25 @@ const returnBook = async (req, res, next) => {
       });
     }
 
-    const [transactions] = await query(
+    await conn.beginTransaction();
+
+    const [transactions] = await conn.query(
       `SELECT t.*, b.title as book_title, b.id as book_id, u.id as student_id, u.name as student_name
        FROM transactions t
        JOIN books b ON t.book_id = b.id
        JOIN users u ON t.user_id = u.id
-       WHERE t.id = ?`,
+       WHERE t.id = ? FOR UPDATE`,
       [transactionId]
     );
 
     if (transactions.length === 0) {
+      await conn.rollback();
       return res.status(404).json({ success: false, message: 'Transaction not found' });
     }
 
     const trans = transactions[0];
     if (trans.status === 'RETURNED') {
+      await conn.rollback();
       return res.status(400).json({
         success: false,
         message: 'This book has already been marked as returned'
@@ -160,7 +187,7 @@ const returnBook = async (req, res, next) => {
     const fineAmount = fineCalculation.amount;
 
     // 1. Update transaction
-    await query(
+    await conn.query(
       `UPDATE transactions 
        SET return_date = ?, status = 'RETURNED', fine_amount = ?, updated_at = NOW()
        WHERE id = ?`,
@@ -168,12 +195,12 @@ const returnBook = async (req, res, next) => {
     );
 
     // 2. Increment book available copies
-    await query('UPDATE books SET available_copies = available_copies + 1, updated_at = NOW() WHERE id = ?', [trans.book_id]);
+    await conn.query('UPDATE books SET available_copies = available_copies + 1, updated_at = NOW() WHERE id = ?', [trans.book_id]);
 
     // 3. Create fine record if late
     let fineRecordId = null;
     if (fineAmount > 0) {
-      const [fineRes] = await query(
+      const [fineRes] = await conn.query(
         `INSERT INTO fines (transaction_id, user_id, amount, reason, status, created_at)
          VALUES (?, ?, ?, ?, 'PENDING', NOW())`,
         [
@@ -184,7 +211,11 @@ const returnBook = async (req, res, next) => {
         ]
       );
       fineRecordId = fineRes.insertId;
+    }
 
+    await conn.commit();
+
+    if (fineAmount > 0) {
       await createNotification(
         trans.user_id,
         'Book Returned - Overdue Fine Notice',
@@ -238,7 +269,10 @@ const returnBook = async (req, res, next) => {
       reservationNotified
     });
   } catch (error) {
+    await conn.rollback().catch(() => {});
     next(error);
+  } finally {
+    conn.release();
   }
 };
 
@@ -371,9 +405,137 @@ const getTransactionById = async (req, res, next) => {
   }
 };
 
+// POST /api/transactions/borrow (Student self-service borrow)
+const borrowBook = async (req, res, next) => {
+  const pool = getPool();
+  const conn = await pool.getConnection();
+  try {
+    const userId = req.user.id;
+    const { bookId } = req.body;
+
+    if (!bookId) {
+      return res.status(400).json({ success: false, message: 'Book ID is required' });
+    }
+
+    // 1. Check student exists and is ACTIVE
+    const [students] = await conn.query('SELECT id, name, email, status FROM users WHERE id = ?', [userId]);
+    if (students.length === 0) {
+      return res.status(404).json({ success: false, message: 'Student account not found' });
+    }
+    const student = students[0];
+    if (student.status !== 'ACTIVE') {
+      return res.status(400).json({ success: false, message: 'Your student account is inactive. Please contact the librarian.' });
+    }
+
+    // 2. Check borrowing limit
+    const maxBooksStr = await getSetting('max_books_per_student', '5');
+    const maxBooks = parseInt(maxBooksStr, 10) || 5;
+
+    const [activeLoans] = await conn.query(
+      `SELECT COUNT(*) as count FROM transactions WHERE user_id = ? AND status IN ('ISSUED', 'OVERDUE')`,
+      [userId]
+    );
+
+    if (activeLoans[0].count >= maxBooks) {
+      return res.status(400).json({
+        success: false,
+        message: `You have reached your maximum borrowing allowance of ${maxBooks} simultaneous books.`
+      });
+    }
+
+    // 3. Check student doesn't already have this book borrowed
+    const [alreadyBorrowed] = await conn.query(
+      `SELECT id FROM transactions WHERE user_id = ? AND book_id = ? AND status IN ('ISSUED', 'OVERDUE')`,
+      [userId, bookId]
+    );
+    if (alreadyBorrowed.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'You currently have an active borrowed copy of this book.'
+      });
+    }
+
+    await conn.beginTransaction();
+
+    // 4. Lock book row and check available copies
+    const [books] = await conn.query('SELECT id, title, available_copies FROM books WHERE id = ? FOR UPDATE', [bookId]);
+    if (books.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ success: false, message: 'Book not found in catalog' });
+    }
+    const book = books[0];
+    if (book.available_copies <= 0) {
+      await conn.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `"${book.title}" is currently out of stock. You can place a hold via Reserve Book.`
+      });
+    }
+
+    // 5. Calculate due date
+    const periodDaysStr = await getSetting('borrowing_period_days', '14');
+    const periodDays = parseInt(periodDaysStr, 10) || 14;
+    const dueDateObj = new Date();
+    dueDateObj.setDate(dueDateObj.getDate() + periodDays);
+    const dueDateFormatted = dueDateObj.toISOString().split('T')[0];
+    const todayFormatted = new Date().toISOString().split('T')[0];
+
+    // 6. Create transaction
+    const [transResult] = await conn.query(
+      `INSERT INTO transactions (user_id, book_id, issue_date, due_date, status, fine_amount, created_at)
+       VALUES (?, ?, ?, ?, 'ISSUED', 0.00, NOW())`,
+      [userId, bookId, todayFormatted, dueDateFormatted]
+    );
+
+    // 7. Decrement available copies safely
+    const [updateRes] = await conn.query(
+      'UPDATE books SET available_copies = available_copies - 1, updated_at = NOW() WHERE id = ? AND available_copies > 0',
+      [bookId]
+    );
+    if (updateRes.affectedRows === 0) {
+      await conn.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `"${book.title}" is currently out of stock. You can place a hold via Reserve Book.`
+      });
+    }
+
+    // 8. Fulfill reservation if student had WAITING hold
+    await conn.query(
+      `UPDATE reservations SET status = 'FULFILLED' 
+       WHERE user_id = ? AND book_id = ? AND status = 'WAITING'`,
+      [userId, bookId]
+    );
+
+    await conn.commit();
+
+    // 9. Send notification
+    await createNotification(
+      userId,
+      'Book Borrowed Successfully',
+      `You have borrowed "${book.title}". Please return or renew it by ${dueDateFormatted} to avoid overdue fees.`,
+      'SUCCESS'
+    );
+
+    res.status(201).json({
+      success: true,
+      message: `"${book.title}" borrowed successfully! Return by ${dueDateFormatted}.`,
+      transactionId: transResult.insertId,
+      dueDate: dueDateFormatted
+    });
+  } catch (error) {
+    await conn.rollback().catch(() => {});
+    next(error);
+  } finally {
+    conn.release();
+  }
+};
+
 module.exports = {
   issueBook,
+  borrowBook,
   returnBook,
   getAllTransactions,
   getTransactionById
 };
+

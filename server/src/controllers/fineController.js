@@ -126,14 +126,23 @@ const getFineStats = async (req, res, next) => {
   try {
     const [pendingRows] = await query('SELECT COALESCE(SUM(amount), 0) as total FROM fines WHERE status = "PENDING"');
     const [paidRows] = await query('SELECT COALESCE(SUM(amount), 0) as total FROM fines WHERE status = "PAID"');
-    const [overdueRows] = await query(`SELECT COUNT(*) as count FROM transactions WHERE status = 'OVERDUE' OR (status = 'ISSUED' AND due_date < CURRENT_DATE)`);
+    const [pendingCountRows] = await query('SELECT COUNT(*) as count FROM fines WHERE status = "PENDING"');
+    const [overdueRows] = await query('SELECT COUNT(*) as count FROM transactions WHERE status = "OVERDUE" OR (status = "ISSUED" AND due_date < CURRENT_DATE)');
+    const pendingTotal = parseFloat(pendingRows[0].total) || 0;
+    const paidTotal = parseFloat(paidRows[0].total) || 0;
+    const overdueTotal = overdueRows[0].count || 0;
+    const pendingCount = pendingCountRows[0].count || 0;
 
     res.status(200).json({
       success: true,
       stats: {
-        totalPendingFines: parseFloat(pendingRows[0].total) || 0,
-        totalCollectedFines: parseFloat(paidRows[0].total) || 0,
-        totalOverdueTransactions: overdueRows[0].count || 0
+        totalPendingFines: pendingTotal,
+        pendingAmount: pendingTotal,
+        totalCollectedFines: paidTotal,
+        collectedAmount: paidTotal,
+        totalOverdueTransactions: overdueTotal,
+        overdueCount: overdueTotal,
+        pendingCount: pendingCount
       }
     });
   } catch (error) {

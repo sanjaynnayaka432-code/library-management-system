@@ -10,7 +10,7 @@ async function request(path, options = {}) {
 
 async function runTestSuite() {
   console.log('====================================================');
-  console.log('🚀 [LibraX Test Suite] Running End-to-End API Tests');
+  console.log('🚀 [LibXVerse Test Suite] Running End-to-End API Tests');
   console.log('====================================================\n');
 
   let passed = 0;
@@ -169,6 +169,28 @@ async function runTestSuite() {
     const settings = await request('/settings', { headers: adminHeaders });
     assert(settings.data?.success === true, 'Circulation settings retrieved');
     assert(settings.data.settings.borrowing_period_days !== undefined, 'Borrowing period configured');
+
+    // 14. Fine Stats (Phase 1 Fix 1.1)
+    console.log('\n[14] Testing Fine Stats Endpoint (Fix 1.1)');
+    const fineStats = await request('/fines/stats', { headers: adminHeaders });
+    assert(fineStats.data?.success === true, 'Fine stats endpoint responded without crash');
+    assert(typeof fineStats.data?.stats?.totalOverdueTransactions === 'number', 'totalOverdueTransactions is a valid number');
+
+    // 15. Reports Date Filtering (Phase 1 Fix 1.2)
+    console.log('\n[15] Testing Reports Date Parameter Alignment (Fix 1.2)');
+    const repSingleDate = await request('/reports?startDate=2026-01-01', { headers: adminHeaders });
+    assert(repSingleDate.data?.success === true, 'Reports query with single date succeeded without syntax error');
+    assert(Array.isArray(repSingleDate.data?.mostBorrowed), 'mostBorrowed array returned with date filter');
+
+    // 16. In-Stock Reservation Guard (Phase 1 Fix 1.4)
+    console.log('\n[16] Testing In-Stock Book Reservation Guard (Fix 1.4)');
+    const resvAttempt = await request('/reservations', {
+      method: 'POST',
+      headers: studentHeaders,
+      body: JSON.stringify({ bookId: 1 }), // Book 1 has available copies
+    });
+    assert(resvAttempt.status === 400, 'Reserving in-stock book returns HTTP 400');
+    assert(resvAttempt.data?.success === false, 'Reservation blocked with helpful guidance message');
 
     console.log('\n====================================================');
     console.log(`🏁 [Test Suite Complete] Passed: ${passed} | Failed: ${failed}`);

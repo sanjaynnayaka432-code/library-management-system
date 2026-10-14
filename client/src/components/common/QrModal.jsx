@@ -49,7 +49,7 @@ export const QrModal = ({ isOpen, onClose, book }) => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>LibraX Tag - ${book?.title}</title>
+          <title>LibXVerse Tag - ${book?.title}</title>
           <style>
             body { font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #fff; }
             .tag { border: 2px solid #0f172a; padding: 24px; text-align: center; border-radius: 16px; width: 280px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -81,7 +81,7 @@ export const QrModal = ({ isOpen, onClose, book }) => {
     if (!qrCodeUrl) return;
     const a = document.createElement('a');
     a.href = qrCodeUrl;
-    a.download = `librax-qr-${book?.isbn || book?.id}.png`;
+    a.download = `libxverse-qr-${book?.isbn || book?.id}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

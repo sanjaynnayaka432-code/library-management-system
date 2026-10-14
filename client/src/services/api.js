@@ -48,7 +48,10 @@ export const authApi = {
 export const booksApi = {
   getAll: (params) => api.get('/books', { params }),
   getById: (id) => api.get(`/books/${id}`),
+  getDiscovery: () => api.get('/books/discovery'),
+  getCatalogStats: () => api.get('/books/catalog-stats'),
   create: (data) => api.post('/books', data),
+  bulkCreate: (data) => api.post('/books/bulk', data),
   update: (id, data) => api.put(`/books/${id}`, data),
   delete: (id) => api.delete(`/books/${id}`),
   getQrCode: (id) => api.get(`/books/${id}/qrcode`),
@@ -74,6 +77,7 @@ export const studentsApi = {
 // Transactions endpoints
 export const transactionsApi = {
   issue: (data) => api.post('/transactions/issue', data),
+  borrow: (data) => api.post('/transactions/borrow', data),
   returnBook: (data) => api.post('/transactions/return', data),
   getAll: (params) => api.get('/transactions', { params }),
   getById: (id) => api.get(`/transactions/${id}`),
@@ -85,6 +89,22 @@ export const reservationsApi = {
   getAll: (params) => api.get('/reservations', { params }),
   updateStatus: (id, status) => api.put(`/reservations/${id}`, { status }),
   delete: (id) => api.delete(`/reservations/${id}`),
+};
+
+// Favorites endpoints
+export const favoritesApi = {
+  getAll: (params) => api.get('/favorites', { params }),
+  toggle: (bookId) => api.post(`/favorites/${bookId}`),
+  remove: (bookId) => api.delete(`/favorites/${bookId}`),
+  check: (bookId) => api.get(`/favorites/check/${bookId}`),
+};
+
+// Reviews endpoints
+export const reviewsApi = {
+  getByBook: (bookId) => api.get(`/books/${bookId}/reviews`),
+  add: (bookId, data) => api.post(`/books/${bookId}/reviews`, data),
+  delete: (id) => api.delete(`/reviews/${id}`),
+  getAllAdmin: () => api.get('/reviews/admin/all'),
 };
 
 // Fines endpoints
@@ -119,3 +139,4 @@ export const settingsApi = {
 };
 
 export default api;
+

@@ -64,7 +64,7 @@ export const StudentDashboard = () => {
         <div className="relative z-10 max-w-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-white text-xs font-bold mb-3 border border-white/20">
             <Sparkles className="w-3.5 h-3.5 text-accent-cyan" />
-            <span>LibraX Student Learning Lounge</span>
+            <span>LibXVerse Student Learning Lounge</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-black tracking-tight leading-tight">
             Welcome back, {user?.name?.split(' ')[0] || 'Student'}! 👋

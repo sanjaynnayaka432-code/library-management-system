@@ -9,8 +9,12 @@ router.use(authenticateToken);
 router.get('/', transactionController.getAllTransactions);
 router.get('/:id', transactionController.getTransactionById);
 
+// Student borrow route
+router.post('/borrow', transactionController.borrowBook);
+
 // Issue and Return actions require Admin privileges
 router.post('/issue', requireAdmin, transactionController.issueBook);
 router.post('/return', requireAdmin, transactionController.returnBook);
+
 
 module.exports = router;

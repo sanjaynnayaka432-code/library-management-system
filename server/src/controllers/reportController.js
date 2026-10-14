@@ -42,17 +42,30 @@ const getReports = async (req, res, next) => {
        FROM fines`
     );
 
+    let mostBorrowedWhere = '';
+    let mostBorrowedParams = [];
+    if (startDate && endDate) {
+      mostBorrowedWhere = 'WHERE t.issue_date >= ? AND t.issue_date <= ?';
+      mostBorrowedParams = [startDate, endDate];
+    } else if (startDate) {
+      mostBorrowedWhere = 'WHERE t.issue_date >= ?';
+      mostBorrowedParams = [startDate];
+    } else if (endDate) {
+      mostBorrowedWhere = 'WHERE t.issue_date <= ?';
+      mostBorrowedParams = [endDate];
+    }
+
     // 2. Most borrowed books
     const [mostBorrowed] = await query(
       `SELECT b.id, b.title, b.isbn, b.author, c.name as category_name, COUNT(t.id) as borrow_count
        FROM books b
        LEFT JOIN categories c ON b.category_id = c.id
        JOIN transactions t ON b.id = t.book_id
-       ${transDateClause ? `WHERE t.issue_date >= ? AND t.issue_date <= ?` : ''}
+       ${mostBorrowedWhere}
        GROUP BY b.id
        ORDER BY borrow_count DESC
        LIMIT 10`,
-      transParams.length === 2 ? transParams : []
+      mostBorrowedParams
     );
 
     // 3. Most active students
@@ -76,28 +89,47 @@ const getReports = async (req, res, next) => {
        ORDER BY book_count DESC`
     );
 
+    const summaryObj = {
+      totalBooks: bookCount[0].count || 0,
+      total_books: bookCount[0].count || 0,
+      totalCopies: bookCount[0].copies || 0,
+      total_copies: bookCount[0].copies || 0,
+      available_copies: (bookCount[0].copies || 0) - (transStats[0].total_issued || 0),
+      totalStudents: studentCount[0].count || 0,
+      total_students: studentCount[0].count || 0,
+      totalTransactions: transStats[0].total_transactions || 0,
+      total_transactions: transStats[0].total_transactions || 0,
+      totalIssued: transStats[0].total_issued || 0,
+      total_issued: transStats[0].total_issued || 0,
+      totalReturned: transStats[0].total_returned || 0,
+      total_returned: transStats[0].total_returned || 0,
+      totalOverdue: transStats[0].total_overdue || 0,
+      overdue_books: transStats[0].total_overdue || 0,
+      totalFines: parseFloat(fineStats[0].total_fines) || 0,
+      total_fines: parseFloat(fineStats[0].total_fines) || 0,
+      paidFines: parseFloat(fineStats[0].paid_fines) || 0,
+      paid_fines: parseFloat(fineStats[0].paid_fines) || 0,
+      pendingFines: parseFloat(fineStats[0].pending_fines) || 0,
+      pending_fines: parseFloat(fineStats[0].pending_fines) || 0
+    };
+
     res.status(200).json({
       success: true,
+      summary: summaryObj,
+      booksByCategory: categoryDistribution,
+      mostBorrowed,
+      mostActiveStudents,
       report: {
-        summary: {
-          totalBooks: bookCount[0].count || 0,
-          totalCopies: bookCount[0].copies || 0,
-          totalStudents: studentCount[0].count || 0,
-          totalTransactions: transStats[0].total_transactions || 0,
-          totalIssued: transStats[0].total_issued || 0,
-          totalReturned: transStats[0].total_returned || 0,
-          totalOverdue: transStats[0].total_overdue || 0,
-          totalFines: parseFloat(fineStats[0].total_fines) || 0,
-          paidFines: parseFloat(fineStats[0].paid_fines) || 0,
-          pendingFines: parseFloat(fineStats[0].pending_fines) || 0
-        },
+        summary: summaryObj,
         mostBorrowed,
         mostActiveStudents,
-        categoryDistribution
+        categoryDistribution,
+        booksByCategory: categoryDistribution
       }
     });
   } catch (error) {
     next(error);
+
   }
 };
 

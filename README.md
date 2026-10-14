@@ -1,8 +1,9 @@
-# LibraX - Smart Library Management System 📚⚡
+# LibXVerse — Smart Library Management System 📚⚡
 
-> A modern, full-stack, production-grade Library Management System designed for academic institutions, research facilities, and community libraries.
+> **Explore Beyond Pages.**  
+> A modern, intelligent platform for managing books, library members, borrowing, returns, reservations, and library operations.
 
-![LibraX Banner](https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&q=80&w=1200)
+![LibXVerse Banner](https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&q=80&w=1200)
 
 ---
 
@@ -159,7 +160,7 @@ npm run dev
 
 ## 🔄 End-to-End Automated Testing
 
-LibraX includes a built-in automated test suite verifying all 20+ operations including authentication, role enforcement, book checkout, overdue calculations, and stock consistency:
+LibXVerse includes a built-in automated test suite verifying all 20+ operations including authentication, role enforcement, book checkout, overdue calculations, and stock consistency:
 
 ```bash
 cd server
@@ -169,7 +170,7 @@ node src/utils/testSuite.js
 Expected output:
 ```text
 ====================================================
-🚀 [LibraX Test Suite] Running End-to-End API Tests
+🚀 [LibXVerse Test Suite] Running End-to-End API Tests
 ====================================================
   ✅ PASS: Server health check is online
   ✅ PASS: Admin login succeeded

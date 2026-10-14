@@ -18,6 +18,8 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -43,7 +45,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'online',
-    system: 'LibraX Smart Library Management System',
+    system: 'LibXVerse — Smart Library Management System',
     timestamp: new Date().toISOString()
   });
 });
@@ -60,6 +62,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/reviews', reviewRoutes);
+
 
 // 404 Fallback
 app.use((req, res) => {
@@ -77,7 +82,7 @@ const startServer = async () => {
   try {
     await initDatabase();
     app.listen(PORT, () => {
-      console.log(`🚀 [LibraX Server] Running smoothly on http://localhost:${PORT}`);
+      console.log(`🚀 [LibXVerse Server] Running smoothly on http://localhost:${PORT}`);
       console.log(`📚 Ready to manage smart library operations`);
     });
   } catch (err) {

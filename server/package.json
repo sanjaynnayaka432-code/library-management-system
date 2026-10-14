@@ -1,7 +1,7 @@
 {
   "name": "librax-server",
   "version": "1.0.0",
-  "description": "Backend API for LibraX - Smart Library Management System",
+  "description": "Backend API for LibXVerse — Smart Library Management System",
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {
@@ -9,8 +9,8 @@
     "dev": "nodemon src/server.js",
     "seed": "node src/utils/seed.js"
   },
-  "keywords": ["library", "management", "librax", "express", "mysql"],
-  "author": "LibraX Team",
+  "keywords": ["library", "management", "libxverse", "express", "mysql"],
+  "author": "LibXVerse Team",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",

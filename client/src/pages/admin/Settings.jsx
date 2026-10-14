@@ -20,8 +20,8 @@ export const Settings = () => {
     borrowing_period_days: '14',
     fine_rate_per_day: '5',
     max_books_per_student: '5',
-    library_name: 'LibraX Smart Library System',
-    contact_email: 'librarian@librax.edu',
+    library_name: 'LibXVerse — Smart Library Management System',
+    contact_email: 'librarian@libxverse.edu',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

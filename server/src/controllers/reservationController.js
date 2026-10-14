@@ -25,6 +25,14 @@ const createReservation = async (req, res, next) => {
     }
     const book = books[0];
 
+    // Check if book already has available copies on the shelf
+    if (book.available_copies > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `"${book.title}" is currently available on shelf (${book.available_copies} copy available). Please borrow directly.`
+      });
+    }
+
     // Check duplicate WAITING reservation
     const [existingRes] = await query(
       `SELECT id FROM reservations WHERE user_id = ? AND book_id = ? AND status = 'WAITING'`,

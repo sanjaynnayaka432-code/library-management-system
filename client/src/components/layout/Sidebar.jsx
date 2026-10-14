@@ -15,6 +15,7 @@ import {
   Search,
   BookMarked,
   UserCircle,
+  Heart,
   X,
   Sparkles,
   Database
@@ -50,11 +51,13 @@ export const Sidebar = ({ isOpen, onClose }) => {
   const studentLinks = [
     { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
     { name: 'Browse Catalog', path: '/catalog', icon: Search },
+    { name: 'My Favorites', path: '/student/favorites', icon: Heart },
     { name: 'My Borrowed Books', path: '/student/my-books', icon: BookMarked },
     { name: 'My Reservations', path: '/student/my-reservations', icon: CalendarClock },
     { name: 'My Fines & Dues', path: '/student/my-fines', icon: Receipt },
     { name: 'Profile & Security', path: '/student/profile', icon: UserCircle },
   ];
+
 
   const navLinks = isAdmin ? adminLinks : studentLinks;
 
@@ -138,7 +141,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
         </button>
 
         <div className="pt-2 px-2 text-[11px] text-slate-400 flex items-center justify-between font-medium">
-          <span className="text-[10px] tracking-wider uppercase font-semibold">LibraX v1.2</span>
+          <span className="text-[10px] tracking-wider uppercase font-semibold">LibXVerse v1.2</span>
           <span className="text-emerald-500 font-semibold flex items-center gap-1 text-[11px]">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
             MySQL Pool

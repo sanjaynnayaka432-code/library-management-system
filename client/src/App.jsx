@@ -34,6 +34,8 @@ import MyBooks from './pages/student/MyBooks';
 import MyReservations from './pages/student/MyReservations';
 import MyFines from './pages/student/MyFines';
 import Profile from './pages/student/Profile';
+import Favorites from './pages/student/Favorites';
+
 
 // Root redirector based on authentication status & role
 const RootRedirect = () => {
@@ -184,7 +186,16 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/student/favorites"
+          element={
+            <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']}>
+              <Favorites />
+            </ProtectedRoute>
+          }
+        />
       </Route>
+
 
       {/* 404 Fallback */}
       <Route path="*" element={<NotFound />} />

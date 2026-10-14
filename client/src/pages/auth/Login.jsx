@@ -77,7 +77,7 @@ export const Login = () => {
         <div className="glass-card rounded-3xl p-6 sm:p-8 backdrop-blur-3xl shadow-2xl relative">
           <div className="mb-6">
             <h1 className="text-xl sm:text-2xl font-display font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Sign In to LibraX
+              Sign In to LibXVerse
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Select a role profile or enter your institutional credentials
@@ -136,7 +136,7 @@ export const Login = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@librax.com"
+                  placeholder="admin@libxverse.com"
                   className="glass-input w-full pl-10 pr-4 py-2.5 rounded-2xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
                 />
               </div>

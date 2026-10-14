@@ -55,7 +55,7 @@ const register = async (req, res, next) => {
     // Welcome notification
     await createNotification(
       newUserId,
-      'Welcome to LibraX!',
+      'Welcome to LibXVerse!',
       'Your student library account has been created. You can now browse our catalog, borrow books, and reserve titles.',
       'SUCCESS'
     );
@@ -93,7 +93,11 @@ const login = async (req, res, next) => {
       });
     }
 
-    const [users] = await query('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
+    const trimmedEmail = email.toLowerCase().trim();
+    let [users] = await query('SELECT * FROM users WHERE email = ?', [trimmedEmail]);
+    if (users.length === 0 && trimmedEmail === 'admin@libxverse.com') {
+      [users] = await query('SELECT * FROM users WHERE email = ?', ['admin@librax.com']);
+    }
     if (users.length === 0) {
       return res.status(401).json({
         success: false,
